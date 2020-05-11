@@ -114,6 +114,10 @@ const typeDefs = gql`
       author: String!
       genres: [String!]!
     ): Book
+    editAuthor(
+      name: String!
+      setBornTo: Int!
+    ): Author
   }
 `
 
@@ -125,11 +129,11 @@ const resolvers = {
       let filteredBooks = books
       
       if (args.author) {
-        filteredBooks = filteredBooks.filter(book => book.author === args.author)
+        filteredBooks = filteredBooks.filter(b => b.author === args.author)
       }
 
       if (args.genre) {
-        filteredBooks = filteredBooks.filter(book => book.genres.includes(args.genre))
+        filteredBooks = filteredBooks.filter(b => b.genres.includes(args.genre))
       }
 
       return filteredBooks
@@ -137,14 +141,14 @@ const resolvers = {
     allAuthors: () => authors,
   },
   Author: {
-    bookCount: (root) => books.filter(book => book.author === root.name).length,
+    bookCount: (root) => books.filter(b => b.author === root.name).length,
   },
   Mutation: {
     addBook: (root, args) => {
       const book = { ...args, id: uuid() }
       books = books.concat(book)
 
-      if (!authors.find(author => author.name === args.author)) {
+      if (!authors.find(a => a.name === args.author)) {
         const newAuthor = {
           name: args.author,
           id: uuid(),
@@ -153,8 +157,18 @@ const resolvers = {
       }
 
       return book
-    }
-  }
+    },
+    editAuthor: (root, args) => {
+      const author = authors.find(a => a.name === args.name)
+      if (!author) {
+        return null
+      }
+
+      const updatedAuthor = { ...author, born: args.setBornTo }
+      authors = authors.map(a => a.name === args.name ? updatedAuthor : a)
+      return updatedAuthor
+    },
+  },
 }
 
 const server = new ApolloServer({
