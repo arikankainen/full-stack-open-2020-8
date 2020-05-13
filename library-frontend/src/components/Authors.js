@@ -44,7 +44,7 @@ const Authors = (props) => {
           )}
         </tbody>
       </table>
-      <SetBirthyear />
+      <SetBirthyear authors={authors} />
     </div>
   )
 }
