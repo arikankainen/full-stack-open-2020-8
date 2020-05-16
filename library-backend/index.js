@@ -193,7 +193,7 @@ const resolvers = {
       return author
     },
     */
-    editAuthor: async (root, args) => {
+    editAuthor: async (root, args, context) => {
       const currentUser = context.currentUser
 
       if (!currentUser) {
