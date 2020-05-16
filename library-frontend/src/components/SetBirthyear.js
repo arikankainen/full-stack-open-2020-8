@@ -9,6 +9,9 @@ const SetBirthyear = ({ authors }) => {
   const [options, setOptions] = useState({})
 
   const [setBirthyear] = useMutation(SET_BIRTHYEAR, {
+    onError: (error) => {
+      console.log(error.graphQLErrors[0].message)
+    },
     refetchQueries: [ { query: ALL_AUTHORS }, { query: ALL_BOOKS } ]
   })
 
