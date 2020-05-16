@@ -81,7 +81,14 @@ const typeDefs = gql`
       setBornTo: Int!
     ): Author
   }
+  
+  type Subscription {
+    bookAdded: Book!
+  }
 `
+
+const { PubSub } = require('apollo-server')
+const pubsub = new PubSub()
 
 const resolvers = {
   Query: {
@@ -146,7 +153,7 @@ const resolvers = {
         username: user.username,
         id: user._id,
       }
-
+      
       return { value: jwt.sign(userForToken, JWT_SECRET) }
     },
     addBook: async (root, args, context) => {
@@ -180,7 +187,9 @@ const resolvers = {
         throw new UserInputError(error.message, { invalidArgs: args })
       }
       
-      return await book.populate('author').execPopulate()
+      const populatedBook = await book.populate('author').execPopulate()
+      pubsub.publish('BOOK_ADDED', { bookAdded: populatedBook })
+      return populatedBook
     },
     /*
     addAuthor: async (root, args) => {
@@ -210,6 +219,11 @@ const resolvers = {
       return author
     },
   },
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(['BOOK_ADDED'])
+    },
+  },
 }
 
 const server = new ApolloServer({
@@ -230,6 +244,7 @@ const server = new ApolloServer({
   }  
 })
 
-server.listen().then(({ url }) => {
+server.listen().then(({ url, subscriptionsUrl }) => {
   console.log(`Server ready at ${url}`)
+  console.log(`Subscriptions ready at ${subscriptionsUrl}`)
 })
