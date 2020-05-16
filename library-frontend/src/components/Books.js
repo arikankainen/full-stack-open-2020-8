@@ -9,7 +9,9 @@ const Books = (props) => {
   
   const resultAllBooks = useQuery(ALL_BOOKS)
   const [getFilteredBooks, resultFilteredBooks] = useLazyQuery(ALL_BOOKS, {
-    variables: { genre: genreFilter}
+    variables: { genre: genreFilter},
+    refetchQueries: [ { query: ALL_BOOKS } ],
+    fetchPolicy: 'no-cache',
   })
 
   useEffect(() => {
