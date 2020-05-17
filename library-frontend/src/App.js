@@ -50,7 +50,7 @@ const App = () => {
     onSubscriptionData: ({ subscriptionData }) => {
       const addedAuthor = subscriptionData.data.authorAdded
       updateAuthorCacheWith(addedAuthor)
-      window.alert(`new author added: ${addedAuthor.title}`)
+      window.alert(`new author added: ${addedAuthor.name}`)
     }
   })
 

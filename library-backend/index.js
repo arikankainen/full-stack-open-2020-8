@@ -38,6 +38,7 @@ const typeDefs = gql`
     name: String!
     born: Int
     bookCount: Int
+    books: [Book!]
     id: ID!
   }
 
@@ -93,9 +94,17 @@ const pubsub = new PubSub()
 
 const resolvers = {
   Query: {
-    bookCount: () => Book.collection.countDocuments(),
-    authorCount: () => Author.collection.countDocuments(),
+    bookCount: () => {
+      console.log('Query.bookCount')
+      return Book.collection.countDocuments()
+    },
+    authorCount: () => {
+      console.log('Query.authorCount')
+      return Author.collection.countDocuments()
+    },
     allBooks: async (root, args) => {
+      console.log('Query.allBooks')
+
       const genre = args.genre
       const author = args.author
 
@@ -118,16 +127,22 @@ const resolvers = {
       return book
     },
     allAuthors: () => {
-      return Author.find({})
+      console.log('Query.allAuthors')
+      return Author.find({}).populate('books')
     },
     me: (root, args, context) => {
+      console.log('Query.me')
       return context.currentUser
     },
   },
   Author: {
     bookCount: async (root) => {
+      console.log('Author.bookCount (ei haeta tietokannasta)')
+      return root.books.length
+      /*
       const author = await Author.findOne({ name: root.name })
       return await Book.find({ author: author.id }).countDocuments()
+      */
     }
   },
   Mutation: {
@@ -164,24 +179,40 @@ const resolvers = {
         throw new AuthenticationError('not authenticated')
       }
       
-      const author = await Author.findOne({ name: args.author })
-
+      let book = new Book({ ...args })
       let newAuthor = undefined
-      if (!author) {
-        newAuthor = new Author({ name: args.author })
+      let existingAuthor = await Author.findOne({ name: args.author })
+      
+      console.log('existing:', existingAuthor) // *************
+      
+      if (!existingAuthor) {
+        newAuthor = new Author({
+          name: args.author,
+          books: [ book.id ],
+        })
+        
+        console.log('new:', newAuthor) // *************
+        
+        book.author = newAuthor.id
+
         try {
           await newAuthor.save()
           pubsub.publish('AUTHOR_ADDED', { authorAdded: newAuthor })
         } catch (error) {
           throw new UserInputError(error.message, { invalidArgs: args })
         }
+      } else {
+        book.author = existingAuthor.id
+        existingAuthor.books = existingAuthor.books.concat(book.id)
+
+        console.log('existing+books:', existingAuthor) // *************
+        
+        try {
+          await existingAuthor.save()
+        } catch (error) {
+          throw new UserInputError(error.message, { invalidArgs: args })
+        }
       }
-
-      const bookObject = newAuthor
-        ? { ...args, author: newAuthor.id }
-        : { ...args, author: author.id }
-
-      const book = new Book(bookObject)
 
       try {
         await book.save()
