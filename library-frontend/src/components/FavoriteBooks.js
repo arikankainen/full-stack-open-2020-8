@@ -7,7 +7,7 @@ const Books = (props) => {
   const [genreFilter, setGenreFilter] = useState(null)
   const resultAllBooks = useQuery(ALL_BOOKS)
   const resultUser = useQuery(ME, {
-    pollInterval: 2000
+    //pollInterval: 2000
   })
 
   useEffect(() => {

@@ -84,6 +84,7 @@ const typeDefs = gql`
   
   type Subscription {
     bookAdded: Book!
+    authorAdded: Author!
   }
 `
 
@@ -170,6 +171,7 @@ const resolvers = {
         newAuthor = new Author({ name: args.author })
         try {
           await newAuthor.save()
+          pubsub.publish('AUTHOR_ADDED', { authorAdded: newAuthor })
         } catch (error) {
           throw new UserInputError(error.message, { invalidArgs: args })
         }
@@ -191,7 +193,6 @@ const resolvers = {
       pubsub.publish('BOOK_ADDED', { bookAdded: populatedBook })
       return populatedBook
     },
-    /*
     addAuthor: async (root, args) => {
       const author = new Author({ ...args })
       try {
@@ -199,9 +200,9 @@ const resolvers = {
       } catch (error) {
         throw new UserInputError(error.message, { invalidArgs: args })
       }
+      pubsub.publish('AUTHOR_ADDED', { authorAdded: author })
       return author
     },
-    */
     editAuthor: async (root, args, context) => {
       const currentUser = context.currentUser
 
@@ -222,6 +223,9 @@ const resolvers = {
   Subscription: {
     bookAdded: {
       subscribe: () => pubsub.asyncIterator(['BOOK_ADDED'])
+    },
+    authorAdded: {
+      subscribe: () => pubsub.asyncIterator(['AUTHOR_ADDED'])
     },
   },
 }

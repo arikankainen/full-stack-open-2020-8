@@ -22,9 +22,8 @@ const Books = (props) => {
   }, [resultAllBooks.data]) // eslint-disable-line
 
   useEffect(() => {
-    setFilteredBooks([])
     getFilteredBooks()
-  }, [genreFilter]) // eslint-disable-line
+  }, [genreFilter, resultAllBooks.data]) // eslint-disable-line
 
   useEffect(() => {
     if (resultFilteredBooks.data) {
@@ -36,7 +35,7 @@ const Books = (props) => {
     return null
   }
 
-  if (resultAllBooks.loading || resultFilteredBooks.loading) {
+  if (resultAllBooks.loading) {
     return <div>loading...</div>
   }
 
